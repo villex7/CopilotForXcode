@@ -1,0 +1,276 @@
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm, inch
+from reportlab.lib.enums import TA_CENTER
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import base64
+import os
+
+# Register custom fonts if available, else use standard fonts
+def register_fonts():
+    try:
+        pdfmetrics.registerFont(TTFont('SweetPoppy', 'Sweet_Poppy.ttf'))
+        pdfmetrics.registerFont(TTFont('CandyBeans', 'Candy_Beans.otf'))
+        return 'SweetPoppy', 'CandyBeans'
+    except Exception as e:
+        print(f"Custom fonts not loaded ({e}), using Helvetica fallback.")
+        # No need to register Helvetica, use default names
+        return 'Helvetica-Bold', 'Helvetica'
+
+font_header, font_body = register_fonts()
+
+# Create base64 encoded sticker images (simplified for demonstration)
+def create_sticker_images():
+    sticker_dir = "/mnt/data/stickers"
+    os.makedirs(sticker_dir, exist_ok=True)
+    
+    # Star sticker (truncated for brevity)
+    star_b64 = "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAACXBIWXMAAAsTAAALEwEAmpwYAAABYklEQVRYhe3WQU7CUBSG8a9vQdIFuAQX4BJcgktwCS7BJbgEl+ASXII2kAY0kRgT4wLcQY0LcAdtDZg8yKXl0b7yXmE4XzK5mTQz/5l7bw7/3QJ4BJ6AL+AL2ANbYBXvPwF3sTbVFsAD8A58A5/AO7AH3oAX4BZYAbfx2dQzqXYLvMR5P4C3OP8eeAWeY+0BuI+1qXYHPAPvce5dnH8Xa9tYu4vPpp5JtTvgEXiOc+/j3PtY28baXXw29Uyq3QL3wGOcexvn38XaNtbu4rOpZ1JtA9wA1zH3Ns6/jbVtrN3FZ1PPpNp1zF3F3Ns4/zbWtrF2F59NPZNqVzF3FXNv4/zbWNvG2l18NvVMql3F3DrmXsf5N7G2ibXr+GzqmVS7jLl1zL2O829ibRNrN/HZ1DOpdvmrdhlzVzH3Ks6/jrVNrF3FZ1PPpNrVr9pVzF3F3Ks4/zrWNrF2HZ9NPZNqN79q1zF3HXOv4/zrWNvE2k18NvVMqt3+qt0C99C9JjQZcR0AAAAASUVORK5CYII="
+    with open(os.path.join(sticker_dir, "star.png"), "wb") as f:
+        f.write(base64.b64decode(star_b64))
+    
+    # Heart sticker
+    heart_b64 = "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAACXBIWXMAAAsTAAALEwEAmpwYAAABYklEQVRYhe3WQU7CUBSG8a9vQdIFuAQX4BJcgktwCS7BJbgEl+ASXII2kAY0kRgT4wLcQY0LcAdtDZg8yKXl0b7yXmE4XzK5mTQz/5l7bw7/3QJ4BJ6AL+AL2ANbYBXvPwF3sTbVFsAD8A58A5/AO7AH3oAX4BZYAbfx2dQzqXYLvMR5P4C3OP8eeAWeY+0BuI+1qXYHPAPvce5dnH8Xa9tYu4vPpp5JtTvgEXiOc+/j3PtY28baXXw29Uyq3QL3wGOcexvn38XaNtbu4rOpZ1JtA9wA1zH3Ns6/jbVtrN3FZ1PPpNp1zF3F3Ns4/zbWtrF2F59NPZNqVzF3FXNv4/zbWNvG2l18NvVMql3F3DrmXsf5N7G2ibXr+GzqmVS7jLl1zL2O829ibRNrN/HZ1DOpdvmrdhlzVzH3Ks6/jrVNrF3FZ1PPpNrVr9pVzF3F3Ks4/zrWNrF2HZ9NPZNqN79q1zF3HXOv4/zrWNvE2k18NvVMqt3+qt0C99C9JjQZcR0AAAAASUVORK5CYII="
+    with open(os.path.join(sticker_dir, "heart.png"), "wb") as f:
+        f.write(base64.b64decode(heart_b64))
+    
+    # Flower sticker
+    flower_b64 = "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAACXBIWXMAAAsTAAALEwEAmpwYAAABYklEQVRYhe3WQU7CUBSG8a9vQdIFuAQX4BJcgktwCS7BJbgEl+ASXII2kAY0kRgT4wLcQY0LcAdtDZg8yKXl0b7yXmE4XzK5mTQz/5l7bw7/3QJ4BJ6AL+AL2ANbYBXvPwF3sTbVFsAD8A58A5/AO7AH3oAX4BZYAbfx2dQzqXYLvMR5P4C3OP8eeAWeY+0BuI+1qXYHPAPvce5dnH8Xa9tYu4vPpp5JtTvgEXiOc+/j3PtY28baXXw29Uyq3QL3wGOcexvn38XaNtbu4rOpZ1JtA9wA1zH3Ns6/jbVtrN3FZ1PPpNp1zF3F3Ns4/zbWtrF2F59NPZNqVzF3FXNv4/zbWNvG2l18NvVMql3F3DrmXsf5N7G2ibXr+GzqmVS7jLl1zL2O829ibRNrN/HZ1DOpdvmrdhlzVzH3Ks6/jrVNrF3FZ1PPpNrVr9pVzF3F3Ks4/zrWNrF2HZ9NPZNqN79q1zF3HXOv4/zrWNvE2k18NvVMqt3+qt0C99C9JjQZcR0AAAAASUVORK5CYII="
+    with open(os.path.join(sticker_dir, "flower.png"), "wb") as f:
+        f.write(base64.b64decode(flower_b64))
+    
+    return sticker_dir
+
+sticker_dir = create_sticker_images()
+
+file_path = "cute_fitness_tracker.pdf"
+
+# Custom DocTemplate to paint pastel pink background on every page
+class PastelPinkTemplate(SimpleDocTemplate):
+    def __init__(self, filename, **kw):
+        super().__init__(filename, **kw)
+        self.pastel_pink = colors.HexColor("#FFD1DC")
+
+    def beforePage(self):
+        self.canv.saveState()
+        self.canv.setFillColor(self.pastel_pink)
+        self.canv.rect(0, 0, self.pagesize[0], self.pagesize[1], fill=1, stroke=0)
+        self.canv.restoreState()
+
+doc = PastelPinkTemplate(
+    file_path,
+    pagesize=A4,
+    leftMargin=1.5*cm,
+    rightMargin=1.5*cm,
+    topMargin=1.5*cm,
+    bottomMargin=1.5*cm
+)
+
+# Styles
+styles = getSampleStyleSheet()
+
+styles.add(ParagraphStyle(
+    name='Header',
+    fontName=font_header,
+    fontSize=28,
+    textColor=colors.HexColor('#FF5C8D'),
+    alignment=TA_CENTER,
+    spaceAfter=12
+))
+styles.add(ParagraphStyle(
+    name='Subheader',
+    fontName=font_header,
+    fontSize=18,
+    textColor=colors.HexColor('#FF85A2'),
+    alignment=TA_CENTER,
+    spaceAfter=8
+))
+styles.add(ParagraphStyle(
+    name='WeekTitle',
+    fontName=font_body,
+    fontSize=16,
+    textColor=colors.HexColor('#D291BC'),
+    alignment=TA_CENTER,
+    spaceAfter=10
+))
+styles.add(ParagraphStyle(
+    name='Body',
+    fontName=font_body,
+    fontSize=12,
+    textColor=colors.HexColor('#8A5362'),
+    leading=16
+))
+styles.add(ParagraphStyle(
+    name='TableHeader',
+    fontName=font_header,
+    fontSize=12,
+    textColor=colors.white,
+    alignment=TA_CENTER
+))
+styles.add(ParagraphStyle(
+    name='TableCell',
+    fontName=font_body,
+    fontSize=11,
+    textColor=colors.HexColor('#8A5362'),
+    alignment=TA_CENTER
+))
+styles.add(ParagraphStyle(
+    name='Footer',
+    fontName=font_body,
+    fontSize=10,
+    textColor=colors.HexColor('#FF85A2'),
+    alignment=TA_CENTER
+))
+
+elements = []
+
+# Title with stars on sides
+title_table = Table([
+    [Image(os.path.join(sticker_dir, "star.png"), width=0.6*inch, height=0.6*inch), 
+     Paragraph("8-Week Fitness Journey Tracker", styles['Header']),
+     Image(os.path.join(sticker_dir, "star.png"), width=0.6*inch, height=0.6*inch)]
+], colWidths=[1.5*cm, None, 1.5*cm])
+title_table.setStyle(TableStyle([
+    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ('BACKGROUND', (0,0), (-1,-1), colors.transparent),
+]))
+elements.append(title_table)
+elements.append(Spacer(1, 10))
+
+# Subtitle
+elements.append(Paragraph("Your Path to a Healthier, Happier You", styles['Subheader']))
+elements.append(Spacer(1, 5))
+
+# Decorative divider
+divider = Table([["♡" * 25]], colWidths=[doc.width])
+divider.setStyle(TableStyle([
+    ('TEXTCOLOR', (0,0), (0,0), colors.HexColor('#FF85A2')),
+    ('ALIGN', (0,0), (0,0), 'CENTER'),
+    ('FONTSIZE', (0,0), (0,0), 10),
+    ('BACKGROUND', (0,0), (0,0), colors.transparent),
+]))
+elements.append(divider)
+elements.append(Spacer(1, 15))
+
+# Intro text with heart sticker
+intro_table = Table([
+    [Image(os.path.join(sticker_dir, "heart.png"), width=0.7*inch, height=0.7*inch), 
+     Paragraph(
+         "Welcome to your fitness adventure! This tracker will help you follow your 8-week journey step-by-step. "
+         "Check off your meals, workouts, and progress each day. Stay consistent and you'll see amazing results! "
+         "Remember to celebrate every small victory along the way! 💖", 
+         styles['Body']
+     )]
+], colWidths=[1.5*inch, None])
+intro_table.setStyle(TableStyle([
+    ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ('BACKGROUND', (0,0), (-1,-1), colors.transparent),
+]))
+elements.append(intro_table)
+elements.append(Spacer(1, 20))
+
+# Table headers (5 columns to match weekly data)
+table_headers = [
+    Paragraph("Day", styles['TableHeader']),
+    Paragraph("Meal Plan", styles['TableHeader']),
+    Paragraph("Workout", styles['TableHeader']),
+    Paragraph("Completed", styles['TableHeader']),
+    Image(os.path.join(sticker_dir, "flower.png"), width=0.5*inch, height=0.5*inch)
+]
+
+# Workout schedule for the week
+workout_schedule = [
+    "Full Body Strength",
+    "Cardio + Core",
+    "Rest / Recovery",
+    "Lower Body Focus",
+    "Upper Body + Core",
+    "Cardio Circuit",
+    "Yoga & Stretching"
+]
+
+# Loop for 8 weeks
+for week in range(1, 9):
+    # Week title
+    week_title = Table([[Paragraph(f"Week {week}", styles['WeekTitle'])]], colWidths=[doc.width])
+    elements.append(week_title)
+
+    # Build week table data including headers for clarity
+    week_table_data = [table_headers]
+
+    for day in range(1, 8):
+        sticker = Image(os.path.join(sticker_dir, "heart.png"), width=0.5*inch, height=0.5*inch) if day % 3 == 0 else ""
+        week_table_data.append([
+            Paragraph(str(day), styles['TableCell']),
+            Paragraph("Follow your meal plan", styles['TableCell']),
+            Paragraph(workout_schedule[day - 1], styles['TableCell']),
+            "",  # space for checkmark
+            sticker
+        ])
+
+    week_table = Table(week_table_data, colWidths=[1*cm, 5*cm, 5*cm, 2*cm, 2*cm], repeatRows=1)
+
+    week_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#FF85A2")),  # Header background
+        ("TEXTCOLOR", (0,0), (-1,0), colors.white),                # Header text color
+        ("ALIGN", (0,0), (-1,-1), "CENTER"),
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+        ("FONTNAME", (0,0), (-1,0), font_header),
+        ("FONTNAME", (0,1), (-1,-1), font_body),
+        ("FONTSIZE", (0,0), (-1,-1), 10),
+        ("BOX", (0,0), (-1,-1), 1, colors.HexColor("#FF85A2")),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#FFB6C1")),
+        ("BACKGROUND", (0,1), (-1,-1), colors.HexColor("#FFECF1")),
+    ]))
+    elements.append(week_table)
+    elements.append(Spacer(1, 15))
+
+# Progress tracking section
+progress_title = Table([[Paragraph("Progress Tracking", styles['WeekTitle'])]], colWidths=[doc.width])
+elements.append(progress_title)
+
+progress_table = Table([
+    ["Week", "Weight", "Measurements", "Energy Level", "Sticker Reward"],
+    ["Start", "", "", "", Image(os.path.join(sticker_dir, "star.png"), width=0.7*inch, height=0.7*inch)],
+    ["Week 2", "", "", "", Image(os.path.join(sticker_dir, "flower.png"), width=0.7*inch, height=0.7*inch)],
+    ["Week 4", "", "", "", Image(os.path.join(sticker_dir, "heart.png"), width=0.7*inch, height=0.7*inch)],
+    ["Week 6", "", "", "", Image(os.path.join(sticker_dir, "star.png"), width=0.7*inch, height=0.7*inch)],
+    ["Week 8", "", "", "", Image(os.path.join(sticker_dir, "flower.png"), width=0.7*inch, height=0.7*inch)]
+], colWidths=[2*cm, 4*cm, 4*cm, 3*cm, 3*cm])
+
+progress_table.setStyle(TableStyle([
+    ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#FF85A2")),
+    ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+    ("FONTNAME", (0,0), (-1,0), font_header),
+    ("FONTSIZE", (0,0), (-1,0), 12),
+    ("BACKGROUND", (0,1), (-1,-1), colors.HexColor("#FFECF1")),
+    ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#FFB6C1")),
+    ("ALIGN", (0,0), (-1,-1), "CENTER"),
+    ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+    ("BOX", (0,0), (-1,-1), 1, colors.HexColor("#FF85A2")),
+]))
+elements.append(progress_table)
+elements.append(Spacer(1, 20))
+
+# Notes section
+notes_title = Table([[Paragraph("Personal Notes & Achievements", styles['WeekTitle'])]], colWidths=[doc.width])
+elements.append(notes_title)
+
+notes_table = Table([
+    [Paragraph(
+        "Celebrate your wins here! ✨<br/><br/>"
+        "Week 1: ________________________________________________<br/>"
+        "Week 2: ________________________________________________<br/>"
+        "Week 3: ________________________________________________<br/>"
+        "Week 4: ________________________________________________<br/>"
+        "Week 5: ________________________________________________<br/>"
+        "Week 6: ________________________________________________<br/>"
+        "Week 7: ________________________________________________<br/>"
+        "Week 8: ________________________________________________",
+        styles['Body'])
+    ]
+], colWidths
